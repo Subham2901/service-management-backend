@@ -44,41 +44,72 @@ export class MasterAgreementsService {
     }
   }
 
-  /**
-   * Fetch and store agreement details, grouped by domain.
-   */
+
   async fetchAndStoreAgreementDetails(agreementId: number): Promise<any> {
     this.logger.debug(`Fetching details for Master Agreement ID: ${agreementId}`);
-    const rawDetails = await this.masterAgreementDetailModel.find({ agreementId }).exec();
-
+  
+    // Step 1: Fetch details from the database
+    let rawDetails = await this.masterAgreementDetailModel.find({ agreementId }).exec();
+  
+    // Step 2: If no data in DB, fetch from external API
     if (!rawDetails.length) {
-      this.logger.warn(`No details found for agreement ID: ${agreementId}`);
-      throw new NotFoundException('No details found for the specified agreement ID');
+      this.logger.warn(`No details found in the database for agreement ID: ${agreementId}`);
+      const url = `${this.baseUrl}/established-agreements/${agreementId}`;
+      this.logger.log(`Fetching details from external API: ${url}`);
+      
+      try {
+        const response = await firstValueFrom(this.httpService.get(url));
+        const externalDetails = response.data;
+  
+        // Normalize and validate external API data
+        const validDetails = externalDetails.flatMap((domain) =>
+          domain.roleDetails.map((roleDetail) => ({
+            agreementId,
+            domainId: domain.domainId,
+            domainName: domain.domainName,
+            ...roleDetail,
+          }))
+        );
+  
+        if (!validDetails.length) {
+          this.logger.warn(`No valid details found from the external API for agreement ID: ${agreementId}`);
+          throw new NotFoundException('No valid details found for the specified agreement ID');
+        }
+  
+        // Step 3: Save valid details to the database
+        await this.masterAgreementDetailModel.insertMany(validDetails, { ordered: false });
+        this.logger.log(`Stored ${validDetails.length} details for agreement ID: ${agreementId}`);
+  
+        rawDetails = validDetails;
+      } catch (error) {
+        this.logger.error(`Error fetching details from external API: ${error.message}`, error.stack);
+        throw new NotFoundException('Failed to fetch agreement details from external API');
+      }
     }
-
-    const groupedDetails = rawDetails.reduce((acc, detail) => {
-      const { domainId, domainName, providerId, providerName, role, level, technologyLevel, price, cycle } = detail;
-
+  
+    // Step 4: Normalize raw data from DB or external API
+    const normalizedDetails = rawDetails.map((detail) =>
+      detail.toObject ? detail.toObject() : detail
+    );
+  
+    // Step 5: Group and process details by domain
+    const groupedDetails = normalizedDetails.reduce((acc, detail) => {
+      const { domainId, domainName, ...roleDetail } = detail;
+  
       let domainGroup = acc.find((group) => group.domainId === domainId);
       if (!domainGroup) {
         domainGroup = { domainId, domainName, roleDetails: [] };
         acc.push(domainGroup);
       }
-
-      domainGroup.roleDetails.push({
-        providerId,
-        providerName,
-        role,
-        level,
-        technologyLevel,
-        price,
-        cycle,
-      });
-
+  
+      domainGroup.roleDetails.push(roleDetail);
       return acc;
     }, []);
-
+  
     this.logger.log(`Grouped ${groupedDetails.length} domains for agreement ID: ${agreementId}`);
     return groupedDetails;
   }
+  
+
+
 }

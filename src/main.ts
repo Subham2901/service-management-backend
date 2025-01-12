@@ -124,7 +124,7 @@ async function bootstrap() {
   }
 
   // Memory Usage Logger (Optional, for local testing)
-  if (!isProduction) {
+  /* if (!isProduction) {
     setInterval(() => {
       const memoryUsage = process.memoryUsage();
       console.log('Memory Usage:', {
@@ -134,6 +134,6 @@ async function bootstrap() {
         external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
       });
     }, 60000); // Logs every minute
-  }
+  } */
 }
 bootstrap();

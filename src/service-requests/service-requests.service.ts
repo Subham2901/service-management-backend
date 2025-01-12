@@ -40,27 +40,36 @@ export class ServiceRequestsService {
   
     try {
       const groupedDetails = await this.masterAgreementsService.fetchAndStoreAgreementDetails(data.agreementId);
+  
       if (!groupedDetails.length) {
         throw new NotFoundException(`No details found for Master Agreement ID: ${data.agreementId}`);
       }
   
+      // Build `cycleDetails` based on the `roleDetails` and their cycles
       const cycleDetails = {
         cycle1: groupedDetails
-          .filter((detail) => detail.roleDetails.some((role) => role.cycle === 'cycle_one'))
-          .flatMap((domain) => domain.roleDetails.map(({ providerId, providerName, price }) => ({
-            providerId,
-            providerName,
-            price,
-          }))),
+          .flatMap((domain) =>
+            domain.roleDetails
+              .filter((role) => role.cycle === 'cycle_one')
+              .map(({ providerId, providerName, price }) => ({
+                providerId,
+                providerName,
+                price,
+              }))
+          ),
         cycle2: groupedDetails
-          .filter((detail) => detail.roleDetails.some((role) => role.cycle === 'cycle_two'))
-          .flatMap((domain) => domain.roleDetails.map(({ providerId, providerName, price }) => ({
-            providerId,
-            providerName,
-            price,
-          }))),
+          .flatMap((domain) =>
+            domain.roleDetails
+              .filter((role) => role.cycle === 'cycle_two')
+              .map(({ providerId, providerName, price }) => ({
+                providerId,
+                providerName,
+                price,
+              }))
+          ),
       };
   
+      // Create the service request object
       const serviceRequest = new this.serviceRequestModel({
         ...data,
         createdBy,
@@ -77,6 +86,7 @@ export class ServiceRequestsService {
       throw new InternalServerErrorException('Failed to create service request');
     }
   }
+  
   
   
 
