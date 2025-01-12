@@ -20,9 +20,7 @@ import { MasterAgreementsModule } from './master-agreements/master-agreements.mo
           throw new Error('MONGO_URI is not defined in the environment variables');
         }
         return {
-          uri,
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
+          uri, // MongoDB URI from environment variables
         };
       },
       inject: [ConfigService],
