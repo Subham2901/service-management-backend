@@ -48,5 +48,15 @@ async function bootstrap() {
     logger.error('Error during application initialization', error.stack);
     process.exit(1); // Exit with error code
   }
+  setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    console.log('Memory Usage:', {
+      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
+      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
+    });
+  }, 60000); // Logs every minute
+  
 }
 bootstrap();
