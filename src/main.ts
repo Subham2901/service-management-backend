@@ -5,9 +5,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+  const isProduction = process.env.NODE_ENV === 'production'; // Check environment
+
   try {
     const app = await NestFactory.create(AppModule, {
-      logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Enable all log levels
+      logger: isProduction ? ['error', 'warn'] : ['log', 'error', 'warn', 'debug'], // Restrict logs in production
     });
 
     // Set global API prefix
@@ -22,7 +24,7 @@ async function bootstrap() {
       }),
     );
 
-    // Enable CORS for frontend-backend communication
+    // Enable CORS for Railway frontend-backend communication
     app.enableCors({
       origin: '*', // Adjust this to your frontend URL in production
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -38,7 +40,8 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api-docs', app, document);
 
-    const port = process.env.PORT || 3000;
+    // Railway uses the PORT environment variable
+    const port = parseInt(process.env.PORT, 10) || 3000;
 
     // Start the application
     await app.listen(port);
@@ -48,15 +51,18 @@ async function bootstrap() {
     logger.error('Error during application initialization', error.stack);
     process.exit(1); // Exit with error code
   }
-  setInterval(() => {
-    const memoryUsage = process.memoryUsage();
-    console.log('Memory Usage:', {
-      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
-      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
-    });
-  }, 60000); // Logs every minute
-  
+
+  // Memory Usage Logger (Optional, for local testing)
+  if (!isProduction) {
+    setInterval(() => {
+      const memoryUsage = process.memoryUsage();
+      console.log('Memory Usage:', {
+        rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
+        heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+        heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+        external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
+      });
+    }, 60000); // Logs every minute
+  }
 }
 bootstrap();
