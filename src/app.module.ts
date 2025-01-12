@@ -9,8 +9,8 @@ import { MasterAgreementsModule } from './master-agreements/master-agreements.mo
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Makes ConfigModule available globally
-      envFilePath: '.env', // Specify the location of the .env file
+      isGlobal: true,
+      envFilePath: '.env',
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -19,8 +19,12 @@ import { MasterAgreementsModule } from './master-agreements/master-agreements.mo
         if (!uri) {
           throw new Error('MONGO_URI is not defined in the environment variables');
         }
+
+        // Log the MongoDB connection string (mask sensitive information if needed)
+        console.log('Connecting to MongoDB with URI:', uri);
+
         return {
-          uri, // MongoDB URI from environment variables
+          uri,
         };
       },
       inject: [ConfigService],
