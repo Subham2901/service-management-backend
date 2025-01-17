@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -17,14 +17,26 @@ export class AuthService {
     try {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       const userData = { ...user, password: hashedPassword };
-
+  
       this.logger.debug(`Registering user with data: ${JSON.stringify(userData)}`);
       const result = await this.usersService.create(userData);
       this.logger.log(`User registered successfully with ID: ${result._id}`);
       return result;
     } catch (error) {
       this.logger.error('Error during user registration', error.stack);
-      throw new BadRequestException('Registration failed');
+  
+      // Handle specific error scenarios
+      if (error instanceof BadRequestException) {
+        throw error; // Pass existing BadRequestException directly
+      }
+  
+      if (error.code === 11000) {
+        // MongoDB duplicate key error code
+        throw new BadRequestException('Email already exists');
+      }
+  
+      // Fallback for unknown errors
+      throw new BadRequestException('Registration failed due to an unknown error');
     }
   }
 
@@ -52,6 +64,23 @@ export class AuthService {
     } catch (error) {
       this.logger.error('Error during user login', error.stack);
       throw error;
+    }
+  }
+  async getProfile(userId: string) {
+    this.logger.log(`Fetching profile for user ID: ${userId}`);
+    try {
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Return only necessary fields
+      const { password, ...profile } = user.toObject();
+      this.logger.log(`Profile fetched successfully for user ID: ${userId}`);
+      return profile;
+    } catch (error) {
+      this.logger.error(`Error fetching profile for user ID: ${userId}`, error.stack);
+      throw new NotFoundException('Could not fetch profile');
     }
   }
 }

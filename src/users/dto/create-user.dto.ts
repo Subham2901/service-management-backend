@@ -34,6 +34,7 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'user', description: 'Role of the user (default: user)' })
   @IsString()
+  @IsIn(['user', 'admin', 'PM'])
   role: string;
 
   @ApiProperty({ example: 'MyCompany', description: 'Company name (optional)' })

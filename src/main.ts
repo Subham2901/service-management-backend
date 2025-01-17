@@ -123,17 +123,6 @@ async function bootstrap() {
     process.exit(1); // Exit with error code
   }
 
-  // Memory Usage Logger (Optional, for local testing)
-  /* if (!isProduction) {
-    setInterval(() => {
-      const memoryUsage = process.memoryUsage();
-      console.log('Memory Usage:', {
-        rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
-        heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-        heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-        external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
-      });
-    }, 60000); // Logs every minute
-  } */
+
 }
 bootstrap();

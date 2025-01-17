@@ -1,10 +1,12 @@
-import { Module, Logger } from '@nestjs/common';
+import { Module, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule'; // Import ScheduleModule
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
 import { MasterAgreementsModule } from './master-agreements/master-agreements.module';
+import { MasterAgreementsService } from './master-agreements/master-agreements.service';
 
 @Module({
   imports: [
@@ -20,25 +22,32 @@ import { MasterAgreementsModule } from './master-agreements/master-agreements.mo
           throw new Error('MONGO_URI is not defined in the environment variables');
         }
 
-        // Log the MongoDB connection string (mask sensitive information if needed)
-        console.log('Connecting to MongoDB with URI:', uri);
-
-        return {
-          uri,
-        };
+        console.log('Connecting to MongoDB with URI:', uri); // Log MongoDB URI
+        return { uri };
       },
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(), // Enable scheduling for periodic tasks
     UsersModule,
     AuthModule,
     ServiceRequestsModule,
     MasterAgreementsModule,
   ],
+  providers: [Logger], // Provide Logger for consistent logging
 })
-export class AppModule {
+export class AppModule implements OnModuleInit {
   private readonly logger = new Logger(AppModule.name);
 
-  constructor() {
+  constructor(private readonly masterAgreementsService: MasterAgreementsService) {}
+
+  async onModuleInit() {
     this.logger.log('AppModule initialized');
+    this.logger.log('Triggering initial sync for Master Agreements...');
+    try {
+      await this.masterAgreementsService.fetchAndStoreAll();
+      this.logger.log('Initial sync for Master Agreements completed successfully');
+    } catch (error) {
+      this.logger.error('Initial sync for Master Agreements failed', error.stack);
+    }
   }
 }

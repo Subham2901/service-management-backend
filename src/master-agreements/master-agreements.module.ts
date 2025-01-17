@@ -6,11 +6,13 @@ import { MasterAgreementsController } from './master-agreements.controller';
 import { MasterAgreementsService } from './master-agreements.service';
 import { MasterAgreement, MasterAgreementSchema } from './schemas/master-agreement.schema';
 import { MasterAgreementDetail, MasterAgreementDetailSchema } from './schemas/master-agreement-detail.schema';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     HttpModule, // For making HTTP requests to external APIs
     ConfigModule, // For accessing environment variables (ensure it's global in AppModule)
+    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: MasterAgreement.name, schema: MasterAgreementSchema },
       { name: MasterAgreementDetail.name, schema: MasterAgreementDetailSchema },
