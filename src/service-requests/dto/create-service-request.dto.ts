@@ -1,5 +1,5 @@
 /* import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsArray, IsNotEmpty, IsEnum, MinLength, MaxLength, ArrayNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsArray, IsNotEmpty, IsEnum, ArrayNotEmpty } from 'class-validator';
 
 export class CreateServiceRequestDto {
   @ApiProperty({ example: 103, description: 'Master Agreement ID' })
@@ -7,15 +7,8 @@ export class CreateServiceRequestDto {
   @IsNotEmpty()
   agreementId: number;
 
-  @ApiProperty({ example: 'Master Agreement B', description: 'Master Agreement Name' })
-  @IsString()
-  @IsNotEmpty()
-  agreementName: string;
-
   @ApiProperty({ example: 'Develop a feature', description: 'Task description' })
   @IsString()
-  @MinLength(5)
-  @MaxLength(500)
   @IsNotEmpty()
   taskDescription: string;
 
@@ -28,175 +21,180 @@ export class CreateServiceRequestDto {
   @IsString()
   @IsNotEmpty()
   project: string;
-
-  @ApiProperty({ example: '2025-02-01', description: 'Start date' })
-  @IsString()
-  @IsNotEmpty()
-  begin: string;
-
-  @ApiProperty({ example: '2025-02-28', description: 'End date' })
-  @IsString()
-  @IsNotEmpty()
-  end: string;
-
-  @ApiProperty({ example: 20, description: 'Total man-days required' })
-  @IsNumber()
-  @IsNotEmpty()
-  amountOfManDays: number;
-
-  @ApiProperty({ example: 'Onsite', description: 'Location' })
-  @IsString()
-  @IsNotEmpty()
-  location: string;
-
-  @ApiProperty({ example: [1, 2], description: 'Selected Domain IDs (multiple for Team)' })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsNumber({}, { each: true })
-  @IsNotEmpty()
-  selectedDomains: number[];
-
-  @ApiProperty({
-    example: [
-      {
-        providerId: 101,
-        domainId: 1,
-        role: 'Administrator',
-        level: 'Junior',
-        technology: 'Common',
-        providerName: 'Provider A',
-      },
-    ],
-    description: 'Selected members for the service request',
-  })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsNotEmpty()
-  selectedMembers: {
-    providerId: number;
-    domainId: number;
-    role: string;
-    level: string;
-    technology: string;
-    providerName: string;
-  }[];
-}
- */
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsArray, IsNotEmpty, IsEnum, MinLength, MaxLength, ArrayNotEmpty,IsOptional } from 'class-validator';
-
-export class CreateServiceRequestDto {
-  @ApiProperty({ example: 103, description: 'Master Agreement ID' })
-  @IsNumber()
-  @IsNotEmpty()
-  agreementId: number;
-
-  @ApiProperty({ example: 'Master Agreement B', description: 'Master Agreement Name' })
-  @IsString()
-  @IsNotEmpty()
-  agreementName: string;
-
-  @ApiProperty({ example: 'Develop a feature', description: 'Task description' })
-  @IsString()
-  @MinLength(5)
-  @MaxLength(500)
-  @IsNotEmpty()
-  taskDescription: string;
-
-  @ApiProperty({ example: 'Team', description: 'Type of service request (Single, Multi, Team)' })
-  @IsEnum(['Single', 'Multi', 'Team'])
-  @IsNotEmpty()
-  type: string;
-
-  @ApiProperty({ example: 'Project Alpha', description: 'Project name' })
-  @IsString()
-  @IsNotEmpty()
-  project: string;
-
-  @ApiProperty({ example: '2025-02-01', description: 'Start date' })
-  @IsString()
-  @IsNotEmpty()
-  begin: string;
-
-  @ApiProperty({ example: '2025-02-28', description: 'End date' })
-  @IsString()
-  @IsNotEmpty()
-  end: string;
-
-  @ApiProperty({ example: 20, description: 'Total man-days required' })
-  @IsNumber()
-  @IsNotEmpty()
-  amountOfManDays: number;
-
-  @ApiProperty({ example: 'Onsite', description: 'Location' })
-  @IsString()
-  @IsNotEmpty()
-  location: string;
-
-  @ApiProperty({ example: 'Additional info for the provider manager', description: 'Information for the provider manager' })
-  @IsString()
-  @MaxLength(1000)
-  @IsOptional()
-  informationForProviderManager?: string;
-
-  @ApiProperty({ example: 3, description: 'Number of specialists required' })
-  @IsNumber()
-  @IsNotEmpty()
-  numberOfSpecialists: number;
-
-  @ApiProperty({ example: 2, description: 'Number of offers from each provider wanted' })
-  @IsNumber()
-  @IsNotEmpty()
-  numberOfOffers: number;
-
-  @ApiProperty({ example: 'John Doe', description: 'Consumer name' })
-  @IsString()
-  @IsNotEmpty()
-  consumer: string;
-
-  @ApiProperty({ example: ['Jane Doe', 'Jack Smith'], description: 'Representatives for the service request' })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  representatives: string[];
-
-  @ApiProperty({ example: [1, 2], description: 'Selected Domain IDs (multiple for Team)' })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsNumber({}, { each: true })
-  @IsNotEmpty()
-  selectedDomains: number[];
 
   @ApiProperty({
     example: [
       {
         domainId: 1,
         domainName: 'IT Security',
+        roleId: 101,
         role: 'Administrator',
         level: 'Junior',
         technologyLevel: 'Common',
+        numberOfProfilesNeeded: 2,
       },
     ],
     description: 'Selected members for the service request',
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsNotEmpty()
   selectedMembers: {
     domainId: number;
     domainName: string;
+    roleId: number;
     role: string;
     level: string;
     technologyLevel: string;
+    numberOfProfilesNeeded: number;
   }[];
 
-  @ApiProperty({ example: 'Onshore', description: 'Location type' })
-  @IsEnum(['Onshore', 'Nearshore', 'Farshore'])
+  @ApiProperty({ example: '2025-01-01', description: 'Start date of the project' })
+  @IsNotEmpty()
+  begin: Date;
+
+  @ApiProperty({ example: '2025-02-01', description: 'End date of the project' })
+  @IsNotEmpty()
+  end: Date;
+
+  @ApiProperty({ example: 20, description: 'Total man-days required' })
+  @IsNumber()
+  @IsNotEmpty()
+  amountOfManDays: number;
+
+  @ApiProperty({ example: 'Remote', description: 'Work location' })
+  @IsString()
+  @IsNotEmpty()
+  location: string;
+
+  @ApiProperty({ example: ['Representative1', 'Representative2'], description: 'List of representatives' })
+  @IsArray()
+  @ArrayNotEmpty()
+  representatives: string[];
+
+  @ApiProperty({ example: 'Onsite', description: 'Location type (e.g., NearShore,Farshore,Offshore)' })
+  @IsString()
   @IsNotEmpty()
   locationType: string;
 
-  @ApiProperty({ example: 'Uploaded project description', description: 'Document link or data for further descriptions' })
+  @ApiProperty({ example: 'Additional notes for PM', description: 'Optional information for PM' })
   @IsString()
+  informationForProviderManager?: string;
+
+  @ApiProperty({ example: 5, description: 'Number of offers to expect', required: false })
+  @IsNumber()
+  numberOfOffers?: number;
+
+  @ApiProperty({ example: 'Consumer Company', description: 'Consumer name', required: false })
+  @IsString()
+  consumer?: string;
+}
+ */
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsNotEmpty,
+  IsEnum,
+  ArrayNotEmpty,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
+
+export class CreateServiceRequestDto {
+  @ApiProperty({ example: 103, description: 'Master Agreement ID' })
+  @IsNumber({}, { message: 'Agreement ID must be a number.' })
+  @IsNotEmpty({ message: 'Agreement ID is required.' })
+  agreementId: number;
+
+  @ApiProperty({ example: 'Develop a feature', description: 'Task description' })
+  @IsString({ message: 'Task description must be a string.' })
+  @IsNotEmpty({ message: 'Task description is required.' })
+  taskDescription: string;
+
+  @ApiProperty({ example: 'Team', description: 'Type of service request (Single, Multi, Team)' })
+  @IsEnum(['Single', 'Multi', 'Team'], { message: 'Type must be one of Single, Multi, or Team.' })
+  @IsNotEmpty({ message: 'Type is required.' })
+  type: string;
+
+  @ApiProperty({ example: 'Project Alpha', description: 'Project name' })
+  @IsString({ message: 'Project name must be a string.' })
+  @IsNotEmpty({ message: 'Project name is required.' })
+  project: string;
+
+  @ApiProperty({
+    example: [
+      {
+        domainId: 1,
+        domainName: 'IT Security',
+        roleId: 101,
+        role: 'Administrator',
+        level: 'Junior',
+        technologyLevel: 'Common',
+        numberOfProfilesNeeded: 2,
+      },
+    ],
+    description: 'Selected members for the service request',
+  })
+  @IsArray({ message: 'Selected members must be an array.' })
+  @ArrayNotEmpty({ message: 'Selected members must not be empty.' })
+  selectedMembers: {
+    domainId: number;
+    domainName: string;
+    roleId: number;
+    role: string;
+    level: string;
+    technologyLevel: string;
+    numberOfProfilesNeeded: number;
+  }[];
+
+  @ApiProperty({ example: '2025-01-01', description: 'Start date of the project' })
+  @IsDateString({}, { message: 'Begin date must be a valid ISO 8601 date string.' })
+  @IsNotEmpty({ message: 'Begin date is required.' })
+  begin: Date;
+
+  @ApiProperty({ example: '2025-02-01', description: 'End date of the project' })
+  @IsDateString({}, { message: 'End date must be a valid ISO 8601 date string.' })
+  @IsNotEmpty({ message: 'End date is required.' })
+  end: Date;
+
+  @ApiProperty({ example: 20, description: 'Total man-days required' })
+  @IsNumber({}, { message: 'Amount of man-days must be a number.' })
+  @IsNotEmpty({ message: 'Amount of man-days is required.' })
+  amountOfManDays: number;
+
+  @ApiProperty({ example: 'Remote', description: 'Work location' })
+  @IsString({ message: 'Location must be a string.' })
+  @IsNotEmpty({ message: 'Location is required.' })
+  location: string;
+
+  @ApiProperty({ example: ['Representative1', 'Representative2'], description: 'List of representatives' })
+  @IsArray({ message: 'Representatives must be an array.' })
+  @ArrayNotEmpty({ message: 'Representatives must not be empty.' })
+  representatives: string[];
+
+  @ApiProperty({ example: 'Onsite', description: 'Location type (e.g., Nearshore, Farshore, Offshore)' })
+  @IsString({ message: 'Location type must be a string.' })
+  @IsNotEmpty({ message: 'Location type is required.' })
+  locationType: string;
+
+  @ApiProperty({ example: 'Additional notes for PM', description: 'Optional information for PM' })
+  @IsString({ message: 'Information for provider manager must be a string.' })
   @IsOptional()
-  document?: string;
+  informationForProviderManager?: string;
+
+  @ApiProperty({ example: 5, description: 'Number of Specialist to expect', required: false })
+  @IsNumber({}, { message: 'Number of Specialist must be a number.' })
+  @IsOptional()
+  numberOfSpecialists?: number;
+
+  @ApiProperty({ example: 5, description: 'Number of offers to expect', required: false })
+  @IsNumber({}, { message: 'Number of offers must be a number.' })
+  @IsOptional()
+  numberOfOffers?: number;
+
+  @ApiProperty({ example: 'Consumer Company', description: 'Consumer name', required: false })
+  @IsString({ message: 'Consumer must be a string.' })
+  @IsOptional()
+  consumer?: string;
 }
