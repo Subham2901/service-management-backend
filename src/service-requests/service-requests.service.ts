@@ -199,7 +199,7 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
         selectedMembers: mappedMembers,
         numberOfSpecialists: totalSpecialists,
         createdBy,
-        cycleStatus: 'cycle1',
+        cycleStatus: 'Cycle1',
         status: 'submitted',
       });
 
