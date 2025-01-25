@@ -81,7 +81,7 @@ export class ServiceRequest extends Document {
   @Prop({ default: null })
   providerManagerId: string;
 
-  @Prop({ default: 'cycle_one' })
+  @Prop({ default: 'Cycle1' })
   cycleStatus: string;
 
   @Prop({ type: [String], default: [] })

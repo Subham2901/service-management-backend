@@ -110,7 +110,7 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
         selectedMembers: mappedMembers,
         numberOfSpecialists: totalSpecialists,
         createdBy,
-        cycleStatus: 'cycle_one',
+        cycleStatus: 'cycle1',
         status: 'draft',
       });
 
@@ -199,7 +199,7 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
         selectedMembers: mappedMembers,
         numberOfSpecialists: totalSpecialists,
         createdBy,
-        cycleStatus: 'cycle_one',
+        cycleStatus: 'cycle1',
         status: 'submitted',
       });
 
