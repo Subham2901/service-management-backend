@@ -57,4 +57,33 @@ export class UsersService {
 
     return 'Password reset successful';
   }
+  async findWithFilters(
+  role?: string,
+  firstName?: string,
+  lastName?: string,
+  company?: string
+) {
+  const filter: any = {};
+
+  if (role) {
+    filter.role = role;
+  }
+
+  if (firstName) {
+    filter.firstName = new RegExp(firstName, 'i'); // Matches partial first names
+  }
+
+  if (lastName) {
+    filter.lastName = new RegExp(lastName, 'i'); // Matches partial last names
+  }
+
+  if (company) {
+    filter.companyName = new RegExp(company, 'i'); // Matches partial company names
+  }
+
+  return this.userModel.find(filter).exec();
+}
+
+  
+  
 }

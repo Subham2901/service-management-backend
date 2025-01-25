@@ -23,6 +23,9 @@ export class User extends Document {
 
   @Prop({ default: 'user' })
   role: string; // user, admin, PM, etc.
+ 
+  @Prop({ required:false })
+  companyName: string; // user, admin, PM, etc.
 
   @Prop({ default: Date.now })
   createdAt: Date;

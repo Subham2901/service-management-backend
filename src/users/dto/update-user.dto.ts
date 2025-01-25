@@ -38,8 +38,13 @@ export class UpdateUserDto {
   @IsOptional()
   securityAnswer?: string;
 
-  @ApiPropertyOptional({ example: 'admin', description: 'The new role of the user' })
+  @ApiPropertyOptional({
+    example: 'admin',
+    description: 'The new role of the user',
+    enum: ['admin', 'PM', 'user'],
+  })
   @IsString()
+  @IsIn(['admin', 'PM', 'user'])
   @IsOptional()
   role?: string;
 

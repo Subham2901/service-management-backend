@@ -1,8 +1,8 @@
-
-import { Controller, Get, Param, Patch, Body, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Param, Patch, Body, Post, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { first } from 'rxjs';
 
 @ApiTags('Users')
 @Controller('users')
@@ -10,10 +10,25 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Fetch all users' })
-  async findAll() {
-    return this.usersService.findAll();
+@ApiOperation({ summary: 'Fetch all users or search users with filters' })
+@ApiQuery({ name: 'role', required: false, type: String })
+@ApiQuery({ name: 'firstName', required: false, type: String })
+@ApiQuery({ name: 'lastName', required: false, type: String })
+@ApiQuery({ name: 'company', required: false, type: String })
+async findAll(
+  @Query('role') role?: string,
+  @Query('firstName') firstName?: string,
+  @Query('lastName') lastName?: string,
+  @Query('company') company?: string,
+) {
+  if (role || firstName || lastName || company) {
+    return this.usersService.findWithFilters(role, firstName, lastName, company);
   }
+  return this.usersService.findAll();
+}
+
+
+
 
   @Get(':id')
   @ApiOperation({ summary: 'Fetch a user by ID' })
