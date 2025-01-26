@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -220,38 +221,129 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
     }
   }
 
-
-
+// draft and rejection manager
+  async manageServiceRequest(
+    id: string,
+    operation: 'fetch' | 'update' | 'submit',
+    data: Partial<CreateServiceRequestDto>,
+    userId: string,
+    comments?: string,
+  ): Promise<any> {
+    const request = await this.getServiceRequestById(id);
+  
+    if (request.createdBy !== userId) {
+      throw new ForbiddenException('You are not authorized to manage this service request');
+    }
+  
+    switch (operation) {
+      case 'fetch':
+        return request.toObject();
+  
+      case 'update':
+        if (request.status !== 'draft') {
+          throw new ForbiddenException('Only drafts can be updated');
+        }
+        Object.assign(request, data);
+        await request.save();
+        return {
+          message: 'Draft updated successfully',
+          request: request.toObject(),
+        };
+  
+      case 'submit':
+        if (!['draft', 'rejected'].includes(request.status)) {
+          throw new ForbiddenException('Only drafts or rejected requests can be submitted');
+        }
+        request.status = 'submitted';
+        if (comments) {
+          request.notifications.push(`Submitted with comments: ${comments}`);
+        }
+        await request.save();
+        return {
+          message: 'Draft submitted successfully',
+          request: request.toObject(),
+        };
+  
+      default:
+        throw new BadRequestException('Invalid operation');
+    }
+  }
 
   /**
    * Submit a service request.
    */
-  async submit(id: string, userId: string): Promise<any> {
+  async submit(id: string, userId: string, resubmissionData: any): Promise<any> {
     const request = await this.getServiceRequestById(id);
 
     if (request.createdBy !== userId) {
-      throw new ForbiddenException('You are not authorized to submit this service request');
+        throw new ForbiddenException('You are not authorized to submit this service request');
+    }
+
+    // Update fields from the resubmissionData object
+    const allowedFields = [
+        'taskDescription',
+        'project',
+        'begin',
+        'end',
+        'location',
+        'locationType',
+        'numberOfOffers',
+        'representatives',
+        'informationForProviderManager',
+        'selectedMembers'
+    ];
+
+    for (const field of allowedFields) {
+        if (resubmissionData[field] !== undefined) {
+            request[field] = resubmissionData[field];
+        }
+    }
+
+    // Recalculate derived fields if necessary
+    if (resubmissionData.begin || resubmissionData.end) {
+        const start = new Date(request.begin);
+        const end = new Date(request.end);
+        let days = 0;
+        while (start <= end) {
+            const day = start.getDay();
+            if (day !== 0 && day !== 6) days++;
+            start.setDate(start.getDate() + 1);
+        }
+        request.amountOfManDays = days;
+    }
+
+    if (resubmissionData.selectedMembers) {
+        request.numberOfSpecialists = resubmissionData.selectedMembers.reduce(
+            (sum: number, member: any) => sum + (member.numberOfProfilesNeeded || 0),
+            0
+        );
+    }
+
+    // Add the resubmission comment
+    if (resubmissionData.comment) {
+        request.notifications.push(`User Resubmission Comment: ${resubmissionData.comment}`);
     }
 
     request.status = 'submitted';
 
     try {
-      const result = await request.save();
+        const result = await request.save();
+        this.logger.log(`Saved notifications: ${result.notifications}`);
+        this.logger.log(`Service request ID: ${id} submitted successfully with updated data and resubmission comment`);
 
-      this.logger.log(`Service request ID: ${id} submitted successfully`);
+        const transformedResult = {
+            ServiceRequestId: result._id,
+            ...result.toObject(),
+        };
+        delete transformedResult._id;
 
-      const transformedResult = {
-        ServiceRequestId: result._id,
-        ...result.toObject(),
-      };
-      delete transformedResult._id;
-
-      return transformedResult;
+        return transformedResult;
     } catch (error) {
-      this.logger.error(`Error submitting service request: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Failed to submit service request');
+        this.logger.error(`Error submitting service request: ${error.message}`, error.stack);
+        throw new InternalServerErrorException('Failed to submit service request');
     }
-  }
+}
+
 
   //Assign a service request to yourself as a PM
   async assignToSelf(id: string, userId: string, userRole: string): Promise<any> {
@@ -261,8 +353,9 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
   
     const request = await this.getServiceRequestById(id);
   
-    if (request.providerManagerId) {
-      throw new ForbiddenException('This service request is already assigned.');
+    // Ensure the request can only be assigned if it's in "submitted" state
+    if (request.status !== 'submitted') {
+      throw new ForbiddenException('Only submitted service requests can be assigned.');
     }
   
     request.providerManagerId = userId;
@@ -282,6 +375,8 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
       throw new InternalServerErrorException('Failed to assign service request');
     }
   }
+  
+
 
 
 
@@ -488,6 +583,27 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
       throw new InternalServerErrorException('Failed to reject service request');
     }
   }
+
+  // API to fetch all the user requests.
+  async fetchUserRequests(userId: string, status?: string): Promise<any> {
+    try {
+      const filter: any = { createdBy: userId };
+      if (status) {
+        filter.status = status;
+      }
+  
+      const requests = await this.serviceRequestModel.find(filter).exec();
+  
+      return requests.map((request) => ({
+        ServiceRequestId: request._id,
+        ...request.toObject(),
+      }));
+    } catch (error) {
+      this.logger.error(`Error fetching user requests: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Failed to fetch user requests');
+    }
+  }
+  
 
   
 }
