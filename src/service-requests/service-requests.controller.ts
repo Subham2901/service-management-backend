@@ -131,9 +131,6 @@ async getServiceRequestDetails(@Param('id') id: string) {
   return await this.serviceRequestsService.getServiceRequestDetails(id);
 }
   
-
-
-
 // Sumbit a service request
 @Patch(':id/submit')
 @UseGuards(JwtAuthGuard)
@@ -301,6 +298,23 @@ async fetchUserRequestsByStatus(
   const userId = req.user.id;
   return this.serviceRequestsService.fetchUserRequests(userId, status);
 }
+
+  // API to fetch service requests for PM by status
+  @Get('/pm-requests/:status')
+  @UseGuards(JwtAuthGuard) // Ensuring the user is authenticated
+  @ApiOperation({ summary: 'Fetch all service requests for a PM with a specific status' })
+  @ApiParam({
+    name: 'status',
+    required: true,
+    description: 'Filter by status (e.g., draft, submitted, rejected, PmOfferEvaluation)',
+  })
+  async fetchPMRequestsByStatus(
+    @Request() req,
+    @Param('status') status: string // Using @Param to get the status from the URL
+  ): Promise<any> {
+    const userId = req.user.id; // Extract PM user ID from the request object
+    return this.serviceRequestsService.fetchPMRequests(userId, status);
+  }
 
 }
 

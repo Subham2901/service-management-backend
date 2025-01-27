@@ -75,7 +75,7 @@ export class ServiceRequest extends Document {
   @Prop()
   locationType: string;
 
-  @Prop({ default: 'draft', enum: ['draft', 'submitted', 'assigned', 'published', 'rejected'] })
+  @Prop({ default: 'draft', enum: ['draft', 'submitted', 'assigned', 'published', 'rejected','PmOfferEvaluation','OrderCreated'] })
   status: string;
 
   @Prop({ default: null })

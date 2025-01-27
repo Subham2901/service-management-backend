@@ -14,5 +14,6 @@ import { HttpModule } from '@nestjs/axios';
   ],
   controllers: [ServiceRequestsController],
   providers: [ServiceRequestsService],
+  exports: [ServiceRequestsService,MongooseModule],
 })
 export class ServiceRequestsModule {}

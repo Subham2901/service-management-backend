@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
+import { OffersModule } from './offers/offers.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ServiceRequestsModule } from './service-requests/service-requests.modul
     UsersModule,
     AuthModule,
     ServiceRequestsModule,
+    OffersModule,
   ],
   providers: [Logger], // Provide Logger for consistent logging
 })

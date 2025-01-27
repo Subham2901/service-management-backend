@@ -375,7 +375,19 @@ async getServiceRequestDetails(id: string): Promise<ServiceRequest> {
       throw new InternalServerErrorException('Failed to assign service request');
     }
   }
+    // Fetch service requests for a particular PM user by status
+    async fetchPMRequests(userId: string, status: string): Promise<ServiceRequest[]> {
+      const requests = await this.serviceRequestModel.find({
+        providerManagerId: userId,  // Check for the PM's ID
+        status: status,  // Filter by status
+      }).exec();
   
+      if (!requests || requests.length === 0) {
+        throw new NotFoundException(`No service requests found for PM with status ${status}`);
+      }
+  
+      return requests;
+    }
 
 
 
