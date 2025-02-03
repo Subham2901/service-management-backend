@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
 import { OffersModule } from './offers/offers.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OffersModule } from './offers/offers.module';
     AuthModule,
     ServiceRequestsModule,
     OffersModule,
+    OrdersModule,
   ],
   providers: [Logger], // Provide Logger for consistent logging
 })
