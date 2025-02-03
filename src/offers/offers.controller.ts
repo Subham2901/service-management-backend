@@ -53,6 +53,8 @@ export class OffersController {
     return this.offersService.generateOffers(serviceRequest);
   }
 
+  
+
   @Get(':serviceRequestId')
   @ApiOperation({ summary: 'Get offers for a specific service request' })
   @ApiParam({ name: 'serviceRequestId', description: 'ID of the service request' })
@@ -67,19 +69,31 @@ export class OffersController {
   }
 
   @Post('select')
-  @ApiOperation({ summary: 'Select an offer for PM evaluation' })
+  @ApiOperation({ summary: 'Select or Deselect an offer' })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        offerId: { type: 'string', description: 'ID of the offer to select' },
+        offerId: { type: 'string', description: 'ID of the offer to select/deselect' },
       },
       required: ['offerId'],
     },
   })
-  async selectOffer(@Body() body: { offerId: string }) {
-    return this.offersService.selectOffer(body.offerId);
+  async selectOffer(@Body() { offerId }: { offerId: string }) {
+    const offer = await this.offerModel.findById(offerId);
+    if (!offer) {
+      throw new NotFoundException(`Offer with ID ${offerId} not found`);
+    }
+  
+    // Toggle between "Selected" and "Pending"
+    const newStatus = offer.status === 'Selected' ? 'Pending' : 'Selected';
+  
+    offer.status = newStatus;
+    await offer.save();
+  
+    return { message: `Offer marked as ${newStatus} successfully`, offer };
   }
+  
 
   @Get('/selected/:serviceRequestId')
   @ApiOperation({ summary: 'Fetch selected offers for a service request' })
@@ -88,24 +102,7 @@ export class OffersController {
     return this.offersService.getSelectedOffers(serviceRequestId);
   }
 
-  @Patch(':id/evaluate')
-  @ApiOperation({ summary: 'Evaluate an offer (Approve or Reject)' })
-  @ApiParam({ name: 'id', description: 'ID of the offer to evaluate' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['Approved', 'Rejected'], description: 'Status to update the offer to' },
-        comment: { type: 'string', description: 'Optional comment for the decision' },
-      },
-    },
-  })
-  async evaluateOffer(
-    @Param('id') id: string,
-    @Body() { status, comment }: { status: 'Approved' | 'Rejected'; comment?: string }
-  ) {
-    return this.offersService.evaluateOffer(id, status, comment);
-  }
+  
 
   @Patch(':serviceRequestId/send-for-pm-evaluation')
   @ApiOperation({ summary: 'Send service request for PM evaluation' })
@@ -137,41 +134,6 @@ export class OffersController {
     };
   }
 
-
-  @Patch(':id/revise')
-@ApiOperation({ summary: 'Request a revision for the offer (Price revision by provider)' })
-@ApiParam({ name: 'id', description: 'ID of the offer to request a revision for' })
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      comment: { type: 'string', description: 'Comment from the PM asking for revision' },
-    },
-    required: ['comment'],
-  },
-})
-async reviseOffer(
-  @Param('id') id: string,
-  @Body() { comment }: { comment: string }
-) {
-  const offer = await this.offerModel.findById(id);
-  if (!offer) {
-    throw new NotFoundException(`Offer with ID ${id} not found`);
-  }
-
-  if (offer.status === 'Approved') {
-    throw new BadRequestException('This offer is already approved and cannot be revised.');
-  }
-
-  offer.status = 'Revisions Requested';
-  offer.comments = comment;
-  await offer.save();
-
-  return {
-    message: 'Offer revision requested successfully',
-    offer,
-  };
-}
 @Patch(':serviceRequestId/cycle-status')
 @ApiOperation({ summary: 'Update cycle status for a service request' })
 @ApiParam({ name: 'serviceRequestId', description: 'ID of the service request' })
@@ -209,28 +171,34 @@ async updateCycleStatus(
     type: 'object',
     properties: {
       status: { type: 'string', description: 'New status to update the service request to' },
+      comment: { type: 'string', description: 'Offer Evaluation Comments :(optional)' },
     },
     required: ['status'],
   },
 })
 async updateServiceRequestStatus(
   @Param('serviceRequestId') serviceRequestId: string,
-  @Body() { status }: { status: string },
+  @Body() { status, comment }: { status: string; comment?: string },
 ) {
-  // Fetch the service request by ID
   const serviceRequest = await this.serviceRequestModel.findById(serviceRequestId);
   if (!serviceRequest) {
     throw new NotFoundException(`Service request with ID ${serviceRequestId} not found.`);
   }
 
-  // Validate the status (you can customize this list based on your application's needs)
-  const validStatuses = ['published', 'PmOfferEvaluation', 'Approved', 'Rejected'];
+  // Validate the status
+  const validStatuses = ['published', 'PmOfferEvaluation', 'Approved', 'Rejected', 'UserOfferReEvaluation'];
   if (!validStatuses.includes(status)) {
     throw new BadRequestException(`Invalid status provided. Valid statuses are: ${validStatuses.join(', ')}`);
   }
 
-  // Update the status of the service request
+  // Update the status
   serviceRequest.status = status;
+
+  // Store the comment if provided
+  if (comment) {
+    serviceRequest.notifications.push(`Offer Evaluation Comment from : ${comment}`);
+  }
+
   await serviceRequest.save();
 
   return {
@@ -238,6 +206,7 @@ async updateServiceRequestStatus(
     serviceRequest,
   };
 }
+
 
 
 
